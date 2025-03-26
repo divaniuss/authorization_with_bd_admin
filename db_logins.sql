@@ -5,7 +5,7 @@ CREATE TABLE [Clients]
 (
     [ID] INT IDENTITY,
     [login] VARCHAR(50) NOT NULL UNIQUE,
-    [Password] VARCHAR(50) NOT NULL,
+    [Password] VARCHAR(255) NOT NULL,
 );
 
 SELECT * FROM [Clients]
