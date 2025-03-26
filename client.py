@@ -1,6 +1,7 @@
 
 import json
 import socket
+import hashlib
 
 IP = '127.0.0.1'
 PORT = 4000
@@ -20,12 +21,14 @@ while True:
             else:
                 print("Пароли не совпадают или вы ничего не ввели")
 
-        json_output = json.dumps({"data": {"name": login_reg, "password": password_reg}, "action": "REGISTER"})
+        data = password_reg
+        hashed_password = hashlib.sha256(data.encode()).hexdigest()
+        str_hashed_password = str(hashed_password)
+        json_output = json.dumps({"data": {"name": login_reg, "password": str_hashed_password}, "action": "REGISTER"})
         client.send(json_output.encode())
         print("\n Отправляю.. \n")
         ansver_reg = client.recv(1024).decode()
         print(f"Ответ сервера: {ansver_reg}\n")
-
     elif ansv == "-":
         while True:
             login_log = input("\nВведите ваш логин: ")
@@ -36,7 +39,10 @@ while True:
             else:
                 print("Пароли не совпадают или вы ничего не ввели")
 
-        json_output = json.dumps({"data": {"name": login_log, "password": password_log}, "action": "LOGIN"})
+        data = password_log
+        hashed_password_log = hashlib.sha256(data.encode()).hexdigest()
+        str_hashed_password_log = str(hashed_password_log)
+        json_output = json.dumps({"data": {"name": login_log, "password": str_hashed_password_log}, "action": "LOGIN"})
         client.send(json_output.encode())
         print("\n Отправляю.. \n")
         ansver_log = client.recv(1024).decode()
