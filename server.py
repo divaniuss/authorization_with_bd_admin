@@ -24,6 +24,27 @@ while True:
     action = request["action"]
     print(f"Принято: \n{request}")
 
+    if action == "ADMIN":
+        print("Просмотр:")
+        try:
+            conn_db = pyodbc.connect(dsn)
+            cursor = conn_db.cursor()
+
+            cursor.execute("SELECT [ID],[login] FROM [Clients]")
+            rows = cursor.fetchall()
+
+            result_str = ""
+            for row in rows:
+                result_str += f"\nID:{row[0]} Логин: {row[1]}"
+
+            print("rez:")
+            print(result_str)
+            conn.send(result_str.encode())
+        except Exception as e:
+            print(f"Ошибка подключения: {e}")
+            conn.send(f"Ошибка подключения: {e}".encode())
+
+
     if action == "LOGIN":
         print("Вход:")
 
