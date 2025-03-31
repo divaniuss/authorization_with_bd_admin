@@ -1,6 +1,7 @@
 import socket
 import pyodbc
 import json
+from datetime import datetime
 
 server_base = r'localhost\SQLEXPRESS'
 database = 'db_logins'
@@ -21,6 +22,7 @@ print(f"Подключение от: {addr}")
 
 while True:
     request = json.loads(conn.recv(1024).decode())
+    now = str(datetime.now())
     action = request["action"]
     print(f"Принято: \n{request}")
 
@@ -30,12 +32,12 @@ while True:
             conn_db = pyodbc.connect(dsn)
             cursor = conn_db.cursor()
 
-            cursor.execute("SELECT [ID],[login] FROM [Clients]")
+            cursor.execute("SELECT [ID],[Time_log],[login] FROM [Clients]")
             rows = cursor.fetchall()
 
             result_str = ""
             for row in rows:
-                result_str += f"\nID:{row[0]} Логин: {row[1]}"
+                result_str += f"\nID:{row[0]} Был в сети: {row[1]} Логин: {row[2]}"
 
             print("rez:")
             print(result_str)
@@ -47,26 +49,33 @@ while True:
 
     if action == "LOGIN":
         print("Вход:")
-
         login = request["data"]["name"]
         password = request["data"]["password"]
 
         try:
             conn_db = pyodbc.connect(dsn)
             cursor = conn_db.cursor()
+            values = (login, password)
 
-            script = "SELECT * FROM [Clients] WHERE [login] = ? AND [Password] = ?"
-            cursor.execute(script, (login, password))
-
+            insert_check = "SELECT [ID] FROM [Clients] WHERE [login] = ? AND [Password] = ?"
+            cursor.execute(insert_check, values)
+            print("zapisal")
             IsLoginAndPassword = cursor.fetchall()
-            print(IsLoginAndPassword)
+
             if IsLoginAndPassword:
                 conn.send(f"Добро пожаловать {login}!".encode())
+
             else:
                 conn.send(f"Нет такого пользователя".encode())
 
+
+            insert_time = f"UPDATE [Clients] SET [Time_log] = ? WHERE [login] = ? AND [Password] = ?"
+            cursor.execute(insert_time, (now, login, password))
+            conn_db.commit()
+            print("time")
             cursor.close()
             conn_db.close()
+
         except Exception as e:
             print(f"Ошибка подключения: {e}")
             conn.send(f"Ошибка подключения: {e}".encode())

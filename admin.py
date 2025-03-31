@@ -4,15 +4,15 @@ import tkinter as tk
 
 IP = '127.0.0.1'
 PORT = 4000
-
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((IP, PORT))
+client.settimeout(3)
 
 root = tk.Tk()
 root.title("Admin-panel")
-root.geometry("300x700")
+root.geometry("500x700")
 
-label_response = tk.Label(root, text="", width=40, height=40, borderwidth=1, relief="solid")
+label_response = tk.Label(root, text="", width=60, height=40, borderwidth=1, relief="solid")
 label_response.pack(pady=10)
 
 def admin():
