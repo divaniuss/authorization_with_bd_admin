@@ -1,63 +1,93 @@
-
 import json
 import socket
 import hashlib
+import tkinter as tk
+from tkinter import messagebox
 
 IP = '127.0.0.1'
 PORT = 4000
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((IP, PORT))
-while True:
-    ansv = input("Регистрация(+) или вход?(-) или (!) для выхода?: ")
-    if ansv == "+":
-        while True:
-            login_reg = input("\nВведите новый логин: ")
-            password_reg = input("Введите новый пароль: ")
-            password_reg_second = input("Введите пароль повторно:")
 
-            if (password_reg == password_reg_second) and (len(login_reg.strip()) != 0 and len(password_reg.strip()) != 0):
-                break
-            else:
-                print("Пароли не совпадают или вы ничего не ввели")
+root = tk.Tk()
+root.title("Welcome")
+root.geometry("300x200")
 
-        data = password_reg
-        hashed_password = hashlib.sha256(data.encode()).hexdigest()
-        str_hashed_password = str(hashed_password)
-        json_output = json.dumps({"data": {"name": login_reg, "password": str_hashed_password}, "action": "REGISTER"})
+def register():
+    reg_window = tk.Toplevel(root)
+    reg_window.title("Регистрация")
+    reg_window.geometry("300x200")
+
+    tk.Label(reg_window, text="Логин:").pack()
+    login_entry = tk.Entry(reg_window)
+    login_entry.pack()
+
+    tk.Label(reg_window, text="Пароль:").pack()
+    password_entry = tk.Entry(reg_window, show="*")
+    password_entry.pack()
+
+    tk.Label(reg_window, text="Повторите пароль:").pack()
+    password_confirm_entry = tk.Entry(reg_window, show="*")
+    password_confirm_entry.pack()
+
+    def send_register():
+        login = login_entry.get().strip()
+        password = password_entry.get()
+        password_confirm = password_confirm_entry.get()
+
+        if password != password_confirm or not login or not password:
+            messagebox.showerror("Ошибка", "Пароли не совпадают или пустые поля")
+            return
+
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        json_output = json.dumps({"data": {"name": login, "password": hashed_password}, "action": "REGISTER"})
         client.send(json_output.encode())
-        print("\n Отправляю.. \n")
-        ansver_reg = client.recv(1024).decode()
-        print(f"Ответ сервера: {ansver_reg}\n")
-    elif ansv == "-":
-        while True:
-            login_log = input("\nВведите ваш логин: ")
-            password_log = input("Введите ваш пароль: ")
+        response = client.recv(1024).decode()
+        messagebox.showinfo("Ответ сервера", response)
+        reg_window.destroy()
 
-            if len(login_log.strip()) != 0 and len(password_log.strip()) != 0:
-                break
-            else:
-                print("Пароли не совпадают или вы ничего не ввели")
+    tk.Button(reg_window, text="Зарегистрироваться", command=send_register).pack()
 
-        data = password_log
-        hashed_password_log = hashlib.sha256(data.encode()).hexdigest()
-        str_hashed_password_log = str(hashed_password_log)
-        json_output = json.dumps({"data": {"name": login_log, "password": str_hashed_password_log}, "action": "LOGIN"})
+def login():
+    login_window = tk.Toplevel(root)
+    login_window.title("Логин")
+    login_window.geometry("300x150")
+
+    tk.Label(login_window, text="Логин:").pack()
+    login_entry = tk.Entry(login_window)
+    login_entry.pack()
+
+    tk.Label(login_window, text="Пароль:").pack()
+    password_entry = tk.Entry(login_window, show="*")
+    password_entry.pack()
+
+    def send_login():
+        login = login_entry.get().strip()
+        password = password_entry.get()
+
+        if not login or not password:
+            messagebox.showerror("Ошибка", "Поля не должны быть пустыми")
+            return
+
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        json_output = json.dumps({"data": {"name": login, "password": hashed_password}, "action": "LOGIN"})
         client.send(json_output.encode())
-        print("\n Отправляю.. \n")
-        ansver_log = client.recv(1024).decode()
-        print(f"Ответ сервера: {ansver_log}\n")
+        response = client.recv(1024).decode()
+        messagebox.showinfo("Ответ сервера", response)
+        login_window.destroy()
 
-    elif ansv == "!":
-        json_output = json.dumps({"data": "", "action": "BYE"})
-        client.send(json_output.encode())
-        print("\n Отправляю.. \n")
-        ansver_bye = client.recv(1024).decode()
-        print(f"\nОтвет сервера: {ansver_bye}")
-        break
-    else:
-        print("Введите + or - or !")
+    tk.Button(login_window, text="Войти", command=send_login).pack()
 
+def exit_app():
+    json_output = json.dumps({"data": "", "action": "BYE"})
+    client.send(json_output.encode())
+    response = client.recv(1024).decode()
+    root.destroy()
+    client.close()
 
+tk.Button(root, text="Регистрация", command=register).pack(pady=5)
+tk.Button(root, text="Логин", command=login).pack(pady=5)
+tk.Button(root, text="Выход", command=exit_app).pack(pady=5)
 
-client.close()
+root.mainloop()
